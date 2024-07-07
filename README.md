@@ -10,7 +10,7 @@ Date Services è un'applicazione Spring Boot che fornisce API per calcolare date
 ## Tecnologie Utilizzate
 - Spring Boot
 - Java
-- Maven
+- Gradle
 
 
 ## Uso
