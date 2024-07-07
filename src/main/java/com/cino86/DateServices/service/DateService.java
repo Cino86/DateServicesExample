@@ -16,12 +16,17 @@ public class DateService {
 
     private static final Logger logger = LoggerFactory.getLogger(DateService.class);
 
-    public LocalDate calcolaData(DataInput dataInput) {
+    public LocalDate calcolaData(DataInput dataInput) throws CustomException{
         logger.info("Calcolo della data iniziato");
         Set<LocalDate> giorniFestivi = calcolaGiorniFestivi(dataInput.getCalendariFestivi());
 
         LocalDate dataCorrente = dataInput.getDataPartenza();
         int giorniAggiunti = 0;
+        if (!dataInput.getTipoDelta().equals("lavorativi") && !dataInput.getTipoDelta().equals("calendario") ){
+            String errorMessage = "tipoDelta deve essere \"lavorativi\" o \"calendario\". Ricevuto: " + dataInput.getTipoDelta();
+            logger.error(errorMessage); 
+            throw new CustomException("tipoDelta deve essere \"lavorativi\" o \"calendario\"");
+        }
 
         while (giorniAggiunti < Math.abs(dataInput.getDeltaGiorni())) {
             dataCorrente = dataCorrente.plusDays(dataInput.getDeltaGiorni() > 0 ? 1 : -1);
