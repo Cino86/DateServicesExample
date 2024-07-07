@@ -24,6 +24,7 @@ Esempio di payload JSON:
  "tipoDelta": "lavorativi",
  "calendariFestivi": ["Milano"]
 }
+```
 
 ## Test
 Per eseguire i test automatizzati:
