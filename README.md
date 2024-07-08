@@ -29,4 +29,4 @@ Esempio di payload JSON:
 ## Test
 Per eseguire i test automatizzati:
 
-mvn test
+./gradlew test
