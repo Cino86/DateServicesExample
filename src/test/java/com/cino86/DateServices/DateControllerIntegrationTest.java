@@ -1,8 +1,9 @@
 package com.cino86.DateServices;
 
-import com.cino86.DateServices.DateServicesApplication;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.cino86.DateServices.model.DataInput;
+import com.cino86.DateServices.model.DataResponse;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -10,8 +11,6 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import org.springframework.web.context.WebApplicationContext;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -31,12 +30,8 @@ public class DateControllerIntegrationTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @Autowired
-    private WebApplicationContext webApplicationContext;
-
     @Test
     public void testCalcolaData() throws Exception {
-        mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
         DataInput dataInput = new DataInput();
         dataInput.setDataPartenza(LocalDate.of(2024, 7, 7));
         dataInput.setDeltaGiorni(10);
@@ -47,6 +42,6 @@ public class DateControllerIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(dataInput)))
                 .andExpect(status().isOk())
-                .andExpect(content().json("{\"dataCalcolata\": \"2024-07-19\"}"));
+                .andExpect(content().json(objectMapper.writeValueAsString(new DataResponse(LocalDate.of(2024, 7, 19)))));
     }
 }

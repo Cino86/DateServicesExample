@@ -6,6 +6,7 @@ import com.cino86.DateServices.model.DataResponse;
 import com.cino86.DateServices.service.DateService;
 
 import java.time.LocalDate;
+import java.util.concurrent.CompletableFuture;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -22,13 +23,9 @@ public class DateController {
     }
 
     @PostMapping("/calcolaData")
-    public ResponseEntity<?> calcolaData(@RequestBody DataInput dataInput) {
-         try {
-            LocalDate dataCalcolata = dateService.calcolaData(dataInput);
-            DataResponse response = new DataResponse(dataCalcolata);
-            return ResponseEntity.ok(response);
-        } catch (CustomException e) {
-            return ResponseEntity.badRequest().body(new DataResponse(null));
-        }
+    public CompletableFuture<ResponseEntity<DataResponse>> calcolaData(@RequestBody DataInput dataInput) {
+        return dateService.calcolaData(dataInput)
+            .thenApply(dataCalcolata -> ResponseEntity.ok(new DataResponse(dataCalcolata)))
+            .exceptionally(ex -> ResponseEntity.badRequest().body(new DataResponse(null)));
     }
 }

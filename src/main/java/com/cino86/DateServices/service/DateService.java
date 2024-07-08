@@ -10,49 +10,56 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 public class DateService {
 
     private static final Logger logger = LoggerFactory.getLogger(DateService.class);
 
-    public LocalDate calcolaData(DataInput dataInput) throws CustomException{
+    public CompletableFuture<LocalDate> calcolaData(DataInput dataInput) {
         logger.info("Calcolo della data iniziato");
-        Set<LocalDate> giorniFestivi = calcolaGiorniFestivi(dataInput.getCalendariFestivi());
 
-        LocalDate dataCorrente = dataInput.getDataPartenza();
-        int giorniAggiunti = 0;
-        if (!dataInput.getTipoDelta().equals("lavorativi") && !dataInput.getTipoDelta().equals("calendario") ){
+        return calcolaGiorniFestivi(dataInput.getCalendariFestivi())
+            .thenApply(giorniFestivi -> {
+                LocalDate dataCorrente = dataInput.getDataPartenza();
+                int giorniAggiunti = 0;
+                Predicate<LocalDate> isGiornoValido = getGiornoValidoPredicate(dataInput, giorniFestivi);
+
+                while (giorniAggiunti < Math.abs(dataInput.getDeltaGiorni())) {
+                    dataCorrente = dataCorrente.plusDays(dataInput.getDeltaGiorni() > 0 ? 1 : -1);
+                    if (isGiornoValido.test(dataCorrente)) {
+                        giorniAggiunti++;
+                    }
+                }
+
+                logger.info("Calcolo della data completato");
+                return dataCorrente;
+            });
+    }
+
+    private Predicate<LocalDate> getGiornoValidoPredicate(DataInput dataInput, Set<LocalDate> giorniFestivi) {
+        if (!"lavorativi".equals(dataInput.getTipoDelta()) && !"calendario".equals(dataInput.getTipoDelta())) {
             String errorMessage = "tipoDelta deve essere \"lavorativi\" o \"calendario\". Ricevuto: " + dataInput.getTipoDelta();
-            logger.error(errorMessage); 
-            throw new CustomException("tipoDelta deve essere \"lavorativi\" o \"calendario\"");
+            logger.error(errorMessage);
+            throw new CustomException(errorMessage);
         }
 
-        while (giorniAggiunti < Math.abs(dataInput.getDeltaGiorni())) {
-            dataCorrente = dataCorrente.plusDays(dataInput.getDeltaGiorni() > 0 ? 1 : -1);
-
-            if ((dataInput.getTipoDelta().equals("lavorativi") && !isGiornoLavorativo(dataCorrente, giorniFestivi)) ||
-                (dataInput.getTipoDelta().equals("calendario") && giorniFestivi.contains(dataCorrente))) {
-                continue;
-            }
-
-            giorniAggiunti++;
-        }
-
+        return dataCorrente -> {
+            boolean isCalendario = "calendario".equals(dataInput.getTipoDelta());
+            boolean isLavorativi = "lavorativi".equals(dataInput.getTipoDelta());
+            boolean isWeekend = dataCorrente.getDayOfWeek() == DayOfWeek.SATURDAY || dataCorrente.getDayOfWeek() == DayOfWeek.SUNDAY;
+            boolean isFestivo = giorniFestivi.contains(dataCorrente);
         
-        logger.info("Calcolo della data completato");
-        return dataCorrente;
+            return (isCalendario && !isFestivo) || (isLavorativi && !isWeekend && !isFestivo);
+        };
     }
 
-
-    private boolean isGiornoLavorativo(LocalDate data, Set<LocalDate> giorniFestivi) {
-        return !data.getDayOfWeek().equals(DayOfWeek.SATURDAY) &&
-               !data.getDayOfWeek().equals(DayOfWeek.SUNDAY) &&
-               !giorniFestivi.contains(data);
-    }
-
-    private Set<LocalDate> calcolaGiorniFestivi(List<String> calendariFestivi) {
-        // Recupero i giorni festivi in base ai calendari forniti
-        return Set.of(); // Placeholder per l'implementazione
+    private CompletableFuture<Set<LocalDate>> calcolaGiorniFestivi(List<String> calendariFestivi) {
+        // Simulazione di un'operazione asincrona per recuperare i giorni festivi
+        return CompletableFuture.completedFuture(Set.of());
     }
 }
